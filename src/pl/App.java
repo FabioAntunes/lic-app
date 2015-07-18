@@ -4,11 +4,6 @@ import bll.*;
 import dal.Kit;
 import exceptions.UserNotFoundException;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
-
 public class App {
     //constantes com os estados da nossa "maquina de estados"
 	private static final int INIT = 0;
@@ -26,10 +21,8 @@ public class App {
 	private static final long TIMEOUT_MILLIS = 5000; //constante que define o timeout em milissegundo
     public static final int EXIT_MASK = 0x40; // Mascara para obter o 7 bit do Kit, responsavel por desligar a aplicacao
     private static int currentState;
-    private static String firstLine;
-    private static String secondLine;
-	private static String userID;
-	private static String password;
+    private static String userID;
+    private static String password;
 	private static UserManager um;
     private static User currentUser;
     private static long lastMillis;
@@ -52,25 +45,29 @@ public class App {
         char input;
 
         checkTimeout();
+        if(currentState<USER_LOGIN){
+            LCDManager.refreshClock();
+        }
         //testar se o MIS esta ocupado, se estiver nao fazemos nada
         if(!LCD.isBusy()){
             switch (currentState){
                 case INIT:
                     input = KBD.getKey();
-                    firstLine = getCurrentDate();
-                    secondLine = "Utilizador:";
-                    String questionMarks = "??";
 
                     if( input != KBD.NONE){
                         lastMillis = System.currentTimeMillis();
-                        userID += input;
+
+                        if(input == 'C'){
+                            LCDManager.resetID();
+                            userID = "";
+                        }else{
+                            userID += input;
+                            LCDManager.writeChar(input);
+                        }
+
                     }
 
-                    secondLine += userID + questionMarks.substring(userID.length());
-
-                    sendToLCD();
                     if(userID.length() == USER_ID_LENGTH) {
-                        lastMillis = 0;
                         currentState = READING_USER;
                     }
 
@@ -78,16 +75,12 @@ public class App {
                 case READING_USER:
                     try {
                         currentUser = um.findUser(userID);
-
-                        firstLine = getCurrentDate();
-                        secondLine = "Password:????";
-                        sendToLCD();
-
+                        LCDManager.writeOnSecondLine("Password:????");
+                        LCDManager.cursor(1, 9);
                         currentState = READING_PASSWORD;
+                        lastMillis = System.currentTimeMillis();
                     } catch (UserNotFoundException e) {
-                        firstLine = getCurrentDate();
-                        secondLine = "Util. invalido";
-                        sendToLCD();
+                        LCDManager.writeOnSecondLine("Util. invalido");
                         lastMillis = System.currentTimeMillis();
                         currentState = WAIT_TIMEOUT;
                     }
@@ -96,19 +89,19 @@ public class App {
                     checkTimeout();
                     break;
                 case READING_PASSWORD:
-                    firstLine = getCurrentDate();
-                    secondLine = "Password:";
-                    String fourQuestionMarks = "????";
-                    String asterisks = "****";
 
                     input = KBD.getKey();
                     if( input != KBD.NONE){
                         lastMillis = System.currentTimeMillis();
-                        password += input;
-                    }
-                    secondLine += asterisks.substring(asterisks.length() - password.length()) + fourQuestionMarks.substring(password.length());
 
-                    sendToLCD();
+                        if(input == 'C'){
+                            password = "";
+                            LCDManager.resetPassword();
+                        }else{
+                            password += input;
+                            LCDManager.writeChar('*');
+                        }
+                    }
 
                     if(password.length() == PASSWORD_LENGTH) {
                         lastMillis = 0;
@@ -123,27 +116,21 @@ public class App {
                             currentState = USER_LOGIN;
                         }
                     } else {
-                        firstLine = getCurrentDate();
-                        secondLine = "Password errada";
-                        sendToLCD();
+                        LCDManager.writeOnSecondLine("Password errada");
                         lastMillis = System.currentTimeMillis();
                         currentState = WAIT_TIMEOUT;
                     }
                     break;
                 case USER_LOGIN:
                     currentUser.setMinutes(System.currentTimeMillis());
-                    firstLine = getCurrentDay() + getHours(currentUser.getMinutes()) + "-??:??";
-                    secondLine = "Semanal=" + formatSumHours(currentUser.getSum());
-                    sendToLCD();
+                    LCDManager.userLogin(currentUser.getMinutes(), currentUser.getSum());
                     um.saveUser(currentUser);
                     currentState = OPEN_DOOR;
                     break;
                 case USER_LOUGOUT:
                     //calcular o tempo que trabalhou
                     currentUser.incrementSum(System.currentTimeMillis() - currentUser.getMinutes());
-                    firstLine = getCurrentDay() + getHours(currentUser.getMinutes()) + "-" + getHours(System.currentTimeMillis());
-                    secondLine = "Semanal=" + formatSumHours(currentUser.getSum());
-                    sendToLCD();
+                    LCDManager.userLogout(currentUser.getMinutes(), currentUser.getSum());
                     currentUser.setMinutes(0);
                     um.saveUser(currentUser);
                     currentState = OPEN_DOOR;
@@ -161,52 +148,9 @@ public class App {
         }
     }
 
-    /**
-     * Obtem a data actual formatada
-     * @return devolve uma string com o seguinte formato dd/MM/yyyy HH:mm
-     */
-    public static String getCurrentDate(){
-        return new SimpleDateFormat("dd/MM/yyyy HH:mm").format(Calendar.getInstance().getTime());
-    }
 
-    /**
-     * Obter o dia atual abreviado em portugues, por ex: "Seg"
-     * @return
-     */
-    public static String getCurrentDay(){
-        return new SimpleDateFormat("EEE ",  new Locale("pt", "PT")).format(Calendar.getInstance().getTime());
-    }
 
-    /**
-     * Obtem a hora actual
-     * @return
-     */
-    public static String getHours(long millis){
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(millis);
-        return new SimpleDateFormat("HH:mm",  new Locale("pt", "PT")).format(calendar.getTime());
-    }
 
-    /**
-     * Passando os milisegundos em formato unix epoch, converte para s horas e minutos correspondentes
-     * @param millis
-     * @return horas e minutos no formato HH:mm
-     */
-    public static String formatSumHours(long millis){
-        return String.format("%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
-                TimeUnit.MILLISECONDS.toMinutes(millis) % TimeUnit.HOURS.toMinutes(1));
-    }
-
-    /**
-     * Metodo que envia a informacao actual para o LCD
-     */
-    public static void sendToLCD(){
-        LCD.clearDisplay();
-        LCD.cursor(0, 0);
-        LCD.write(firstLine);
-        LCD.cursor(1, 0);
-        LCD.write(secondLine);
-    }
 
     /**
      * Verifica se foi accionado o mecanismo para desligar a aplicacao
@@ -231,12 +175,10 @@ public class App {
         userID = "";
         password = "";
         currentState = INIT;
-        firstLine = getCurrentDate();
-        secondLine= "Utilizador:??";
         currentUser = null;
         lastMillis = 0;
 
-        sendToLCD();
+        LCDManager.resetLCD();
     }
 
     /**

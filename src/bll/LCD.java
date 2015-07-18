@@ -10,8 +10,8 @@ public class LCD {
 	private static final int DISPLAYCLEAR = 0X01;;
 
 	/**
-	 * Envia o bit �rs� e os 8 bits de �data�.
-	 * O bit �rs� indica se � comando ou escrita.
+	 * Envia o bit rs e os 8 bits de data.
+	 * O bit rs indica se e comando ou escrita.
 	 * @param rs
 	 * @param data
 	 */
@@ -20,7 +20,7 @@ public class LCD {
 	 }
 	 
 	 /**
-	  * Envia a sequ�ncia de inicia��o do LCD.
+	  * Envia a sequencia de inicializacao do LCD.
 	  */
 	 public static void init(){
 		 int initCommand = 0X30;
@@ -45,7 +45,7 @@ public class LCD {
 	 }
 	 
 	 /**
-	  * Escreve um car�cter na posi��o corrente.
+	  * Escreve um caracter na posicao corrente.
 	  * @param c caracter que vai ser escrito
 	  */
 	 public static void write(char c){
@@ -53,7 +53,7 @@ public class LCD {
 	 }
 	 
 	 /**
-	  * Escreve uma string na posi��o corrente.
+	  * Escreve uma string na posicao corrente.
 	  * @param txt texto que vai ser escrito
 	  */
 	 public static void write(String txt){
@@ -64,7 +64,7 @@ public class LCD {
 	 }
 	 
 	 /**
-	  * Envia comando para posicionar cursor (�lin�:0..LINES-1 , �col�:0..COLS-1)
+	  * Envia comando para posicionar cursor
 	  * @param lin
 	  * @param col
 	  */

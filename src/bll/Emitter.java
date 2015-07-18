@@ -72,9 +72,9 @@ public class Emitter {
 	private static void initTransmission(){
 		Kit.clrBit(MIck_MASK);
 		Kit.setBit(MIxD_MASK);
-		Kit.sleep(5);
+		Kit.sleep(50);
 		Kit.clrBit(MIxD_MASK);
-		Kit.sleep(5);
+		Kit.sleep(50);
 	}
 	
 }
