@@ -20,7 +20,7 @@ public class App {
 	private static final int PASSWORD_LENGTH = 4; //constante que define o tamanho da password
 	private static final long TIMEOUT_MILLIS = 5000; //constante que define o timeout em milissegundo
     public static final int EXIT_MASK = 0x40; // Mascara para obter o 7 bit do Kit, responsavel por desligar a aplicacao
-    private static int currentState;
+    private static int currentState = -1;
     private static String userID;
     private static String password;
 	private static UserManager um;
@@ -55,12 +55,16 @@ public class App {
                     input = KBD.getKey();
 
                     if( input != KBD.NONE){
-                        lastMillis = System.currentTimeMillis();
 
                         if(input == 'C'){
+                            lastMillis = 0;
                             LCDManager.resetID();
                             userID = "";
+                        }else if(input == 'F'){
+                            currentState = -1;
+                            resetData();
                         }else{
+                            lastMillis = System.currentTimeMillis();
                             userID += input;
                             LCDManager.writeChar(input);
                         }
@@ -174,11 +178,14 @@ public class App {
     private static void resetData(){
         userID = "";
         password = "";
-        currentState = INIT;
         currentUser = null;
         lastMillis = 0;
-
-        LCDManager.resetLCD();
+        if(currentState == INIT) {
+            LCDManager.resetID();
+        }else{
+            LCDManager.resetLCD();
+        }
+        currentState = INIT;
     }
 
     /**

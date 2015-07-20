@@ -19,7 +19,7 @@ public class LCDManager {
      */
     public static void writeChar(char c){
         LCD.write(c);
-        LCDManager.col++;
+        col++;
     }
 
     /**
@@ -43,7 +43,7 @@ public class LCDManager {
         LCD.cursor(1, 0);
         LCD.write(secondLine);
         LCDManager.lin = 1;
-        LCDManager.col = secondLine.length()-1;
+        LCDManager.col = secondLine.length();
     }
 
     /**
@@ -54,25 +54,29 @@ public class LCDManager {
         LCD.cursor(1, 0);
         LCD.write(secondLine);
         LCDManager.lin = 1;
-        LCDManager.col = secondLine.length()-1;
+        LCDManager.col = secondLine.length();
     }
 
     /**
      * Faz reset ao ID do utilizador
      */
     public static void resetID(){
-        LCDManager.cursor(1, 9);
+        lin = 1;
+        col = 11;
+        LCDManager.cursor(lin, col);
         LCD.write("??");
-        LCDManager.cursor(1, 9);
+        LCDManager.cursor(lin, col);
     }
 
     /**
      * Faz reset a password
      */
     public static void resetPassword(){
-        LCD.cursor(1, 11);
+        lin = 1;
+        col = 9;
+        LCDManager.cursor(lin, col);
         LCD.write("????");
-        LCD.cursor(1, 11);
+        LCDManager.cursor(lin, col);
     }
 
     /**
@@ -80,7 +84,10 @@ public class LCDManager {
      */
     public static void resetLCD(){
         clearAndSendToLCD(getCurrentDate(), "Utilizador:??");
-        LCD.cursor(1, 11);
+        lin = 1;
+        col = 11;
+        LCDManager.cursor(lin, col);
+
     }
 
     /**
